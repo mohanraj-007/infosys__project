@@ -1,4 +1,5 @@
 import os
+import streamlit as st
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ import referencing
 load_dotenv()
 llm = HuggingFaceEndpoint(
     repo_id="HuggingFaceH4/zephyr-7b-beta",
+    api_key=st.secrets["HF_TOKEN"],
     temperature=0.0,
     max_new_tokens=500,
 )
