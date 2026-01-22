@@ -1,3 +1,4 @@
+import os
 from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
 from langchain_core.messages import HumanMessage
 from dotenv import load_dotenv
