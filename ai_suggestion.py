@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 import re
 import referencing 
 load_dotenv()
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.environ.get("HF_TOKEN")
 llm = HuggingFaceEndpoint(
     repo_id="HuggingFaceH4/zephyr-7b-beta",
     temperature=0.0,
