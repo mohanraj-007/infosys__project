@@ -6,6 +6,7 @@ import referencing
 load_dotenv()
 llm = HuggingFaceEndpoint(
     repo_id="HuggingFaceH4/zephyr-7b-beta",
+    api_key=os.environ.get("HF_TOKEN"),
     temperature=0.0,
     max_new_tokens=500,
 )
