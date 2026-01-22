@@ -4,7 +4,6 @@ from parse import parse_code
 from error_detector import detect_errors
 from ai_suggestion import get_ai_suggestions
 import os
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.environ.get("HF_TOKEN")
 st.set_page_config(
     page_title="AI Code Reviewer Application",
     page_icon="🤖",
