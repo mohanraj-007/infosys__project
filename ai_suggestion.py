@@ -84,8 +84,8 @@ Analyze ONLY this code:
     try:
         response = client.chat_completion(messages=[{"role": "user", "content": prompt}],max_tokens=350,temperature=0.0)
 
-response_text = response.choices[0].message.content
-cleaned = remove_repetition(response_text)
+        response_text = response.choices[0].message.content
+        cleaned = remove_repetition(response_text)
 
     
         cleaned = remove_repetition(response)
