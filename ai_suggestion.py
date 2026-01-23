@@ -81,14 +81,20 @@ Analyze ONLY this code:
 ```python
 {code_string}
 """
-    try:
-        response = client.chat_completion(messages=[{"role": "user", "content": prompt}],max_tokens=350,temperature=0.0)
-
-        response_text = response.choices[0].message.content
-        cleaned = remove_repetition(response_text)
-
+   try:
+       response = client.chat_completion(
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=350,
+            temperature=0.0
+        )
     
-        cleaned = remove_repetition(response)
+        
+        response_text = response.choices[0].message.content
+    
+        
+        cleaned = remove_repetition(response_text)
     
         return [{
             "type": "AISuggestion",
