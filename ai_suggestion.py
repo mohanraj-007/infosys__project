@@ -82,7 +82,7 @@ Analyze ONLY this code:
 {code_string}
 """
     try:
-       response = client.chat_completion(
+        response = client.chat_completion(
             messages=[
                 {"role": "user", "content": prompt}
             ],
@@ -92,10 +92,10 @@ Analyze ONLY this code:
     
         
         response_text = response.choices[0].message.content
+
     
-        
         cleaned = remove_repetition(response_text)
-    
+
         return [{
             "type": "AISuggestion",
             "message": cleaned,
