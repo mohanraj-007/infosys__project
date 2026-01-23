@@ -82,12 +82,11 @@ Analyze ONLY this code:
 {code_string}
 """
     try:
-        response = client.text_generation(
-            prompt,
-            max_new_tokens=350,
-            temperature=0.0,
-            repetition_penalty=1.3
-        )
+        response = client.chat_completion(messages=[{"role": "user", "content": prompt}],max_tokens=350,temperature=0.0)
+
+response_text = response.choices[0].message.content
+cleaned = remove_repetition(response_text)
+
     
         cleaned = remove_repetition(response)
     
