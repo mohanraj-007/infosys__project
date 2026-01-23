@@ -1,95 +1,112 @@
 import os
-import streamlit as st
-from langchain_huggingface import ChatHuggingFace, HuggingFaceEndpoint
-from langchain_core.messages import HumanMessage
+import ast
 import re
-import referencing
-def get_llm():
-    api_key = os.getenv("HF_TOKEN") or st.secrets["HF_TOKEN"]
-    return HuggingFaceEndpoint(
-        repo_id="HuggingFaceH4/zephyr-7b-beta",
-        api_key=api_key,
-        temperature=0.0,
-        max_new_tokens=500,
-    )
+from huggingface_hub import InferenceClient
 
-def get_model():
-    llm = get_llm()
-    return ChatHuggingFace(llm=llm)
+# -------------------- TOKEN --------------------
+HF_TOKEN = os.getenv("HF_TOKEN")
 
-model = None
-def get_active_model():
-    global model
-    if model is None:
-        model = get_model()
-    return model
+if not HF_TOKEN:
+    raise RuntimeError("HF_TOKEN is missing. Add it in Streamlit Secrets.")
+
+# -------------------- HF CLIENT --------------------
+client = InferenceClient(
+    model="HuggingFaceH4/zephyr-7b-beta",
+    token=HF_TOKEN
+)
+
+# -------------------- HELPERS --------------------
 def is_valid_python(code: str) -> bool:
     try:
         compile(code, "<user_code>", "exec")
         return True
     except Exception:
         return False
+
+
+def is_meaningful_python(code: str) -> bool:
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return False
+
+    if len(tree.body) == 1:
+        node = tree.body[0]
+        if isinstance(node, ast.Expr) and isinstance(node.value, (ast.Name, ast.Constant)):
+            return False
+    return True
+
+
+def remove_repetition(text: str) -> str:
+    sections = [
+        "ISSUES & IMPROVEMENTS",
+        "CORRECTED CODE",
+        "OPTIMIZED CODE"
+    ]
+
+    seen = set()
+    result = []
+
+    for line in text.splitlines():
+        header = line.strip()
+        if header in sections:
+            if header in seen:
+                break
+            seen.add(header)
+        result.append(line)
+
+    return "\n".join(result).strip()
+
+# -------------------- AI SUGGESTIONS --------------------
 def get_ai_suggestions(code_string: str):
     if not code_string.strip():
         return []
 
-    if not is_valid_python(code_string):
+    if not is_valid_python(code_string) or not is_meaningful_python(code_string):
         return [{
             "type": "Error",
-            "message": "Enter valid Python code, not plain text.",
+            "message": "Please enter valid Python code (example: print('hi')).",
             "severity": "High"
         }]
 
     prompt = f"""
-You are a STRICT Python Code Reviewer.
+You are a Python Code Reviewer.
 
-Review ONLY the USER CODE.
-DO NOT review multiple examples.
-DO NOT explain theory.
-DO NOT write paragraphs.
-DO NOT repeat sections.
+STRICT OUTPUT FORMAT (DO NOT BREAK):
 
-MANDATORY FORMAT (NO DEVIATION):
+ISSUES & IMPROVEMENTS
+- bullet points OR "No issues found."
 
-### ISSUES & IMPROVEMENTS
-- Bullet points only
-- If none: No issues found.
+CORRECTED CODE
+- Python code block OR "No correction needed."
 
-### CORRECTED CODE
-- Either code block OR: No correction needed.
+OPTIMIZED CODE
+- Python code block OR "The corrected code is already optimal."
 
-### OPTIMIZED CODE
-- Either code block OR: The given code is already optimal.
+Analyze ONLY this code:
 
-STOP AFTER OPTIMIZED CODE.
-
-### USER CODE
 ```python
 {code_string}
 """
     try:
-        model_instance = get_active_model()
-        response = model_instance.invoke([HumanMessage(content=prompt)])
-        content = response.content.strip()
-        content = re.sub(r"(### [A-Z &]+)-\s*", r"\1\n", content)
-        content = re.sub(r"ISSUES\s*&\s*IMPROVEMENTS.*", "### ISSUES & IMPROVEMENTS", content)
-        content = re.sub(r"CORRECTED CODE.*", "### CORRECTED CODE", content)
-        content = re.sub(r"OPTIMIZED CODE.*", "### OPTIMIZED CODE", content)
-        if "### OPTIMIZED CODE" in content:
-            before, after = content.split("### OPTIMIZED CODE", 1)
-            content = before + "### OPTIMIZED CODE\n" + after.split("###", 1)[0]
-        if content.count("### USER CODE") > 1:
-            content = content.split("### USER CODE", 1)[0]
+    response = client.text_generation(
+        prompt,
+        max_new_tokens=350,
+        temperature=0.0,
+        repetition_penalty=1.3
+    )
 
-        return [{
-            "type": "AISuggestion",
-            "message": content.strip(),
-            "severity": "Info"
-        }]
+    cleaned = remove_repetition(response)
 
-    except Exception as e:
-        return [{
-            "type": "Error",
-            "message": str(e),
-            "severity": "High"
-        }]
+    return [{
+        "type": "AISuggestion",
+        "message": cleaned,
+        "severity": "Info"
+    }]
+
+except Exception as e:
+    return [{
+        "type": "Error",
+        "message": str(e),
+        "severity": "High"
+    }]
