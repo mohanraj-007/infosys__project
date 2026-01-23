@@ -3,19 +3,14 @@ import ast
 import re
 from huggingface_hub import InferenceClient
 
-# -------------------- TOKEN --------------------
 HF_TOKEN = os.getenv("HF_TOKEN")
 
 if not HF_TOKEN:
     raise RuntimeError("HF_TOKEN is missing. Add it in Streamlit Secrets.")
-
-# -------------------- HF CLIENT --------------------
 client = InferenceClient(
     model="HuggingFaceH4/zephyr-7b-beta",
     token=HF_TOKEN
 )
-
-# -------------------- HELPERS --------------------
 def is_valid_python(code: str) -> bool:
     try:
         compile(code, "<user_code>", "exec")
@@ -57,7 +52,6 @@ def remove_repetition(text: str) -> str:
 
     return "\n".join(result).strip()
 
-# -------------------- AI SUGGESTIONS --------------------
 def get_ai_suggestions(code_string: str):
     if not code_string.strip():
         return []
@@ -68,7 +62,6 @@ def get_ai_suggestions(code_string: str):
             "message": "Please enter valid Python code (example: print('hi')).",
             "severity": "High"
         }]
-
     prompt = f"""
 You are a Python Code Reviewer.
 
@@ -89,24 +82,24 @@ Analyze ONLY this code:
 {code_string}
 """
     try:
-    response = client.text_generation(
-        prompt,
-        max_new_tokens=350,
-        temperature=0.0,
-        repetition_penalty=1.3
-    )
+        response = client.text_generation(
+            prompt,
+            max_new_tokens=350,
+            temperature=0.0,
+            repetition_penalty=1.3
+        )
+    
+        cleaned = remove_repetition(response)
+    
+        return [{
+            "type": "AISuggestion",
+            "message": cleaned,
+            "severity": "Info"
+        }]
 
-    cleaned = remove_repetition(response)
-
-    return [{
-        "type": "AISuggestion",
-        "message": cleaned,
-        "severity": "Info"
-    }]
-
-except Exception as e:
-    return [{
-        "type": "Error",
-        "message": str(e),
-        "severity": "High"
-    }]
+    except Exception as e:
+        return [{
+            "type": "Error",
+            "message": str(e),
+            "severity": "High"
+        }]
