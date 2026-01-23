@@ -81,7 +81,7 @@ Analyze ONLY this code:
 ```python
 {code_string}
 """
-   try:
+    try:
        response = client.chat_completion(
             messages=[
                 {"role": "user", "content": prompt}
@@ -101,7 +101,7 @@ Analyze ONLY this code:
             "message": cleaned,
             "severity": "Info"
         }]
-
+    
     except Exception as e:
         return [{
             "type": "Error",
