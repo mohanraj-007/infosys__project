@@ -37,7 +37,6 @@ with col1:
 with col2:
     st.markdown("## 🤖 AI Code Reviewer")
     st.caption("Analyze • Improve • Optimize your Python code")
-# ---------------- TABS ----------------
 tab1, tab2 = st.tabs(["🧪 Code Review", "🤖 AI Suggestions"])
 with tab1:
     st.markdown(
@@ -68,7 +67,6 @@ with tab1:
             st.stop()
         st.success("✅ Code parsed successfully!")
         st.session_state.analyzed = True
-        # Static Analysis
         st.subheader("📊 Static Code Analysis")
         error_result = detect_errors(code)
         if error_result["success"]:
@@ -97,7 +95,6 @@ with tab2:
         with col2:
             st.caption("Click to regenerate AI suggestions")
         with st.spinner("🤖 Generating AI suggestions..."):
-            # ai_trigger forces rerun
             _ = st.session_state.ai_trigger
             suggestions = get_ai_suggestions(
                 st.session_state.code_input
